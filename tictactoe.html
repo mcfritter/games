@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tic Tac Toe</title>
+  <style>
+    :root {
+      --bg: #0f172a;          /* slate-900 */
+      --panel: #111827cc;     /* gray-900 w/alpha */
+      --accent: #22c55e;      /* green-500 */
+      --accent-2: #60a5fa;    /* blue-400 */
+      --muted: #94a3b8;       /* slate-400 */
+      --text: #e5e7eb;        /* gray-200 */
+      --x: #f97316;           /* orange-500 */
+      --o: #06b6d4;           /* cyan-500 */
+      --danger: #ef4444;      /* red-500 */
+      --shadow: 0 20px 40px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.2);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background:
+        radial-gradient(60vmax 60vmax at 20% 10%, #1e293b 0%, transparent 60%),
+        radial-gradient(70vmax 70vmax at 80% 30%, #0b1220 0%, transparent 60%),
+        var(--bg);
+      display: grid;
+      place-items: center;
+      padding: 32px;
+    }
+    .app {
+      width: min(92vw, 720px);
+      background: linear-gradient(180deg, #0b1220aa, #0b1220aa), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><g fill="none" stroke="%23222a3a" stroke-width="1"><path d="M0 60h120M60 0v120"/></g></svg>');
+      backdrop-filter: blur(6px);
+      border: 1px solid #1f2937;
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(22px, 2.4vw + 10px, 32px);
+      letter-spacing: .5px;
+      display: flex;
+      align-items: center;
+      gap: .6ch;
+    }
+    h1 .x { color: var(--x); }
+    h1 .o { color: var(--o); }
+
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      appearance: none; border: none; cursor: pointer;
+      padding: 10px 14px; border-radius: 14px;
+      background: #0b1220; color: var(--text);
+      border: 1px solid #1f2937;
+      font-weight: 600; letter-spacing: .2px;
+      transition: transform .05s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+    .btn:hover { border-color: #334155; }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary { background: linear-gradient(180deg, #0f172a, #0b1220); border-color: #334155; box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+    .btn.accent { background: linear-gradient(180deg, #0b2a19, #0b1f14); border-color: #14532d; }
+
+    .status {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      margin: 10px 0 18px;
+      border-radius: 14px;
+      border: 1px solid #1f2937;
+      background: #0b1220;
+      font-size: clamp(14px, 1.6vw + 8px, 18px);
+    }
+    .status .badge { font-weight: 700; padding: 6px 10px; border-radius: 999px; border: 1px solid #1f2937; background: #0b1628; }
+    .badge.x { color: var(--x); }
+    .badge.o { color: var(--o); }
+
+    .board {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .cell {
+      position: relative;
+      display: grid; place-items: center;
+      border-radius: 18px;
+      background: radial-gradient(120% 120% at 50% 0%, #101827, #0b1220 60%);
+      border: 1px solid #1f2937;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,.25);
+      font-size: clamp(32px, 8vmin, 72px);
+      font-weight: 900; letter-spacing: 1px;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+      transition: transform .08s ease, border-color .2s ease, background .3s ease;
+    }
+    .cell:hover { border-color: #334155; }
+    .cell:active { transform: translateY(1px) scale(.995); }
+    .cell[disabled] { cursor: not-allowed; opacity: .8; }
+    .cell.x { color: var(--x); text-shadow: 0 4px 12px rgba(249,115,22,.25); }
+    .cell.o { color: var(--o); text-shadow: 0 4px 12px rgba(6,182,212,.25); }
+    .cell.win { outline: 3px solid var(--accent-2); box-shadow: 0 0 0 6px rgba(96,165,250,.08), inset 0 2px 12px rgba(96,165,250,.15); }
+
+    .foot { margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .toggle { display: inline-flex; align-items: center; gap: 8px; }
+    .toggle input { width: 42px; height: 24px; appearance: none; background: #0f172a; border: 1px solid #1f2937; border-radius: 999px; position: relative; outline: none; cursor: pointer; transition: background .2s ease, border-color .2s ease; }
+    .toggle input::after { content: ""; position: absolute; inset: 3px; width: 18px; height: 18px; background: #1f2937; border-radius: 50%; transition: transform .2s ease; }
+    .toggle input:checked { background: #0b1f14; border-color: #14532d; }
+    .toggle input:checked::after { transform: translateX(18px); background: #14532d; }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    
+    @media (prefers-reduced-motion: no-preference) {
+      .pop { animation: pop .2s ease both; }
+      @keyframes pop { from { transform: scale(.9); opacity: .8 } to { transform: scale(1); opacity: 1 } }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" role="application" aria-label="Tic Tac Toe game">
+    <header>
+      <h1 aria-live="polite" aria-atomic="true">
+        Tic Tac Toe <span class="x">X</span><span> vs </span><span class="o">O</span>
+      </h1>
+      <div class="controls">
+        <button class="btn primary" id="resetBtn" title="Start a new game (R)">↻ New game</button>
+        <button class="btn" id="swapBtn" title="Swap who goes first">⇄ Swap first</button>
+      </div>
+    </header>
+
+    <div class="status" id="status" role="status" aria-live="polite" aria-atomic="true">
+      <div>
+        <span id="statusText">X to move</span>
+      </div>
+      <div>
+        <span class="badge x" id="xScore">X: 0</span>
+        <span class="badge o" id="oScore" style="margin-left:8px">O: 0</span>
+      </div>
+    </div>
+
+    <section class="board" id="board" role="grid" aria-label="Game board">
+      <!-- Cells are buttons for keyboard / screen reader accessibility -->
+    </section>
+
+    <div class="foot">
+      <label class="toggle" title="Play against the computer">
+        <input type="checkbox" id="cpuToggle" aria-label="CPU opponent">
+        <span>Play vs CPU</span>
+      </label>
+      <small style="color:var(--muted)">Tip: Use arrow keys + Enter/Space. Press <kbd>R</kbd> to reset.</small>
+    </div>
+  </main>
+
+  <script>
+    /* === Game State === */
+    const boardEl = document.getElementById('board');
+    const statusEl = document.getElementById('statusText');
+    const resetBtn = document.getElementById('resetBtn');
+    const swapBtn = document.getElementById('swapBtn');
+    const cpuToggle = document.getElementById('cpuToggle');
+    const xScoreEl = document.getElementById('xScore');
+    const oScoreEl = document.getElementById('oScore');
+
+    const WIN_LINES = [
+      [0,1,2],[3,4,5],[6,7,8], // rows
+      [0,3,6],[1,4,7],[2,5,8], // cols
+      [0,4,8],[2,4,6]          // diagonals
+    ];
+
+    let board = Array(9).fill(null);
+    let xIsNext = true;
+    let gameOver = false;
+    let firstPlayerIsX = true;
+    let scores = { X: 0, O: 0 };
+
+    // Create cells
+    const cells = [...Array(9)].map((_, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'cell';
+      btn.setAttribute('role', 'gridcell');
+      btn.setAttribute('aria-label', `Cell ${i+1}`);
+      btn.dataset.idx = i;
+      btn.addEventListener('click', () => handleMove(i));
+      btn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleMove(i); }
+        // Arrow key navigation
+        const col = i % 3, row = Math.floor(i / 3);
+        let target = null;
+        if (e.key === 'ArrowRight' && col < 2) target = i + 1;
+        if (e.key === 'ArrowLeft' && col > 0) target = i - 1;
+        if (e.key === 'ArrowDown' && row < 2) target = i + 3;
+        if (e.key === 'ArrowUp' && row > 0) target = i - 3;
+        if (target != null) { e.preventDefault(); cells[target].focus(); }
+      });
+      boardEl.appendChild(btn);
+      return btn;
+    });
+
+    function updateUI(highlight = []) {
+      board.forEach((val, i) => {
+        const c = cells[i];
+        c.textContent = val ? val : '';
+        c.classList.toggle('x', val === 'X');
+        c.classList.toggle('o', val === 'O');
+        c.classList.toggle('win', highlight.includes(i));
+        c.disabled = !!val || gameOver;
+      });
+
+      const winner = calculateWinner(board);
+      if (winner) {
+        statusEl.textContent = `${winner.player} wins!`;
+      } else if (board.every(Boolean)) {
+        statusEl.textContent = 'Draw';
+      } else {
+        statusEl.innerHTML = `${xIsNext ? '<span class="x">X</span>' : '<span class="o">O</span>'} to move`;
+      }
+
+      xScoreEl.textContent = `X: ${scores.X}`;
+      oScoreEl.textContent = `O: ${scores.O}`;
+    }
+
+    function handleMove(i) {
+      if (gameOver || board[i]) return;
+      board[i] = xIsNext ? 'X' : 'O';
+      xIsNext = !xIsNext;
+      const result = calculateWinner(board);
+
+      if (result) {
+        gameOver = true;
+        scores[result.player]++;
+        updateUI(result.line);
+        pulse(result.line);
+        return;
+      }
+
+      if (board.every(Boolean)) { // draw
+        gameOver = true;
+        updateUI();
+        return;
+      }
+
+      updateUI();
+
+      // CPU move if enabled and game not over
+      if (!gameOver && cpuToggle.checked && !xIsNext) {
+        window.setTimeout(cpuMove, 220);
+      }
+    }
+
+    function pulse(indices) {
+      indices.forEach(i => { cells[i].classList.add('pop'); setTimeout(() => cells[i].classList.remove('pop'), 220); });
+    }
+
+    function calculateWinner(b) {
+      for (const line of WIN_LINES) {
+        const [a,b1,c] = line;
+        if (b[a] && b[a] === b[b1] && b[a] === b[c]) {
+          return { player: b[a], line };
+        }
+      }
+      return null;
+    }
+
+    function emptyIndices(b) { return b.map((v, i) => v ? null : i).filter(i => i !== null); }
+
+    /* === Simple Minimax for perfect CPU (plays as O) === */
+    function cpuMove() {
+      // CPU plays 'O'
+      const best = minimax(board, false); // xIsNext is false when CPU's turn
+      if (best.index !== null) handleMove(best.index);
+    }
+
+    function minimax(b, isMaximizing) {
+      const winner = calculateWinner(b);
+      if (winner) {
+        if (winner.player === 'O') return { score: 10, index: null };
+        if (winner.player === 'X') return { score: -10, index: null };
+      }
+      if (b.every(Boolean)) return { score: 0, index: null };
+
+      let best = { score: isMaximizing ? -Infinity : Infinity, index: null };
+      for (const i of emptyIndices(b)) {
+        b[i] = isMaximizing ? 'O' : 'X';
+        const result = minimax(b, !isMaximizing);
+        b[i] = null;
+        const scored = { score: result.score, index: i };
+        if (isMaximizing) {
+          if (scored.score > best.score) best = scored;
+        } else {
+          if (scored.score < best.score) best = scored;
+        }
+      }
+      return best;
+    }
+
+    function reset(keepFirst = true) {
+      board = Array(9).fill(null);
+      gameOver = false;
+      if (!keepFirst) firstPlayerIsX = !firstPlayerIsX;
+      xIsNext = firstPlayerIsX;
+      updateUI();
+      // If CPU starts as O (rare), wait for player; if CPU starts as X (if we wanted), we'd trigger here
+    }
+
+    // Controls
+    resetBtn.addEventListener('click', () => reset(true));
+    swapBtn.addEventListener('click', () => { reset(false); });
+
+    // Keyboard shortcut: R to reset
+    window.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'r') { e.preventDefault(); reset(true); }
+    });
+
+    // First render
+    updateUI();
+    // Focus the center cell for convenience
+    cells[4].focus();
+  </script>
+</body>
+</html>

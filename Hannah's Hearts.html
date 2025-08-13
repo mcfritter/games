@@ -1,0 +1,291 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hannah’s Harmony — Hearts & Circles</title>
+  <style>
+    :root {
+      --bg: #0f172a;          /* slate-900 */
+      --panel: #0b1220;       /* deep panel */
+      --border: #1f2937;      /* gray-800 */
+      --muted: #94a3b8;       /* slate-400 */
+      --text: #e5e7eb;        /* gray-200 */
+      --heart: #ef4444;       /* red-500 */
+      --circle: #38bdf8;      /* sky-400 */
+      --accent: #22c55e;      /* green-500 */
+      --shadow: 0 20px 40px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.2);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--text);
+      background:
+        radial-gradient(60vmax 60vmax at 80% 0%, #0b1220 0%, transparent 60%),
+        radial-gradient(70vmax 70vmax at 0% 80%, #111827 0%, transparent 60%),
+        var(--bg);
+      display: grid; place-items: center; padding: 32px;
+    }
+    .app { width: min(92vw, 720px); background: rgba(12,18,34,.86); border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--shadow); padding: 22px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap: 12px; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: clamp(22px, 2.4vw + 10px, 32px); letter-spacing: .4px; display:flex; align-items:center; gap:.6ch; }
+    h1 .heart { color: var(--heart); }
+    h1 .circle { color: var(--circle); }.controls { display:flex; gap: 8px; flex-wrap: wrap; }
+.btn { appearance:none; border:1px solid var(--border); background:#0e1628; color:var(--text); padding:10px 14px; border-radius:14px; font-weight:700; cursor:pointer; transition: transform .05s ease, border-color .2s ease, background .2s ease; }
+.btn:hover { border-color:#334155; }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: linear-gradient(180deg,#0f172a,#0b1220); }
+.btn.good { background: linear-gradient(180deg,#0b2a19,#0b1f14); border-color:#14532d; }
+
+.row { display:flex; gap: 10px; align-items:center; flex-wrap:wrap; }
+
+.status { display:grid; grid-template-columns: 1fr auto; gap: 12px; align-items:center; margin: 12px 0 18px; border:1px solid var(--border); border-radius:14px; padding: 12px 14px; background:#0b1220; font-size: clamp(14px,1.6vw + 8px,18px); }
+.badge { font-weight:900; border:1px solid var(--border); border-radius:999px; padding:6px 10px; }
+.badge.h { color: var(--heart); }
+.badge.c { color: var(--circle); }
+
+.board { width:100%; aspect-ratio:1/1; display:grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+.cell { position:relative; display:grid; place-items:center; font-size: clamp(28px, 7.5vmin, 64px); font-weight:900; letter-spacing:1px; border-radius:18px; border:1px solid var(--border); background: radial-gradient(120% 120% at 50% 0%, #101827, #0b1220 60%); box-shadow: inset 0 2px 8px rgba(0,0,0,.25); cursor: pointer; user-select:none; transition: transform .08s ease, border-color .2s ease, background .3s ease; }
+.cell:hover { border-color:#334155; }
+.cell:active { transform: translateY(1px) scale(.995); }
+.cell[disabled] { cursor:not-allowed; opacity:.8; }
+.cell.heart { color: var(--heart); text-shadow: 0 4px 12px rgba(239,68,68,.25); }
+.cell.circle { color: var(--circle); text-shadow: 0 4px 12px rgba(56,189,248,.25); }
+.cell.flash { outline: 3px solid var(--accent); box-shadow: 0 0 0 6px rgba(34,197,94,.07), inset 0 2px 12px rgba(34,197,94,.15); }
+
+.foot { margin-top: 8px; display:flex; align-items:center; justify-content:space-between; gap: 10px; flex-wrap:wrap; color:var(--muted); }
+kbd { border:1px solid var(--border); border-bottom-color:#111827; padding:.1rem .35rem; border-radius:.4rem; background:#0f172a; color:var(--text); }
+.small { font-size: 12px; color: var(--muted); }
+input[type="number"]{ width:4.5rem; padding:.4rem .5rem; border-radius:.6rem; border:1px solid var(--border); background:#0e1628; color:var(--text); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .pop { animation: pop .22s ease both; }
+  @keyframes pop { from { transform: scale(.9); opacity: .8 } to { transform: scale(1); opacity: 1 } }
+}
+
+  </style>
+</head>
+<body>
+  <main class="app" role="application" aria-label="Hannah’s Harmony game">
+    <header>
+      <h1>Hannah’s Harmony <span class="heart">♥</span> vs <span class="circle">◯</span></h1>
+      <div class="controls">
+        <button id="resetBtn" class="btn primary" title="Start a new match (R)">↻ New match</button>
+        <button id="swapBtn" class="btn" title="Swap who goes first">⇄ Swap first</button>
+        <button id="helpBtn" class="btn good" title="How to play">❔ Rules</button>
+      </div>
+    </header><div class="status" role="status" aria-live="polite" aria-atomic="true">
+  <div id="statusText">Hearts go first • place a piece</div>
+  <div>
+    <span id="hScore" class="badge h">♥: 0</span>
+    <span id="cScore" class="badge c" style="margin-left:8px">◯: 0</span>
+  </div>
+</div>
+
+<section id="board" class="board" role="grid" aria-label="4 by 4 board">
+  <!-- cells injected by JS -->
+</section>
+
+<div class="foot">
+  <div class="row">
+    <label class="row" for="target">Play to</label>
+    <input id="target" type="number" min="1" max="15" value="5" />
+    <span class="small">points</span>
+  </div>
+  <div class="small">Arrow keys + Enter/Space. Press <kbd>R</kbd> to reset.</div>
+</div>
+
+  </main>  <!-- Lightweight rules dialog -->  <dialog id="rules" style="border:none; border-radius:16px; padding:0; background:#0b1220; color:var(--text); box-shadow: var(--shadow); max-width: 640px;">
+    <div style="padding:18px 18px 8px; display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid var(--border);">
+      <strong>How to play — Hannah’s Harmony</strong>
+      <form method="dialog"><button class="btn">✕</button></form>
+    </div>
+    <div style="padding:16px 18px 18px; line-height:1.6; color:#cbd5e1;">
+      <ol>
+        <li>Two players: <span style="color:var(--heart)">♥ Hearts</span> and <span style="color:var(--circle)">◯ Circles</span> take turns placing on a <strong>4×4</strong> board.</li>
+        <li>After you place, if any straight <strong>3-in-a-row segment</strong> (row, column, or diagonal) forms a <em>palindrome</em> — <strong>♥◯♥</strong> or <strong>◯♥◯</strong> — you score <strong>1 point</strong> <em>for each segment</em> and those three tiles <strong>clear</strong> from the board.</li>
+        <li>First to the target score wins. If the board fills with no winner, highest score wins the round.</li>
+        <li>Tip: Set up palindromes that score in <em>two</em> directions at once!</li>
+      </ol>
+    </div>
+  </dialog>  <script>
+    // === Hannah’s Harmony logic ===
+    const SIZE = 4;                 // 4x4 grid
+    const SEG_LEN = 3;              // palindrome segments
+    const H = 'H';                  // Hearts (♥)
+    const C = 'C';                  // Circles (◯)
+
+    const boardEl = document.getElementById('board');
+    const statusEl = document.getElementById('statusText');
+    const resetBtn  = document.getElementById('resetBtn');
+    const swapBtn   = document.getElementById('swapBtn');
+    const helpBtn   = document.getElementById('helpBtn');
+    const rulesDlg  = document.getElementById('rules');
+    const hScoreEl  = document.getElementById('hScore');
+    const cScoreEl  = document.getElementById('cScore');
+    const targetEl  = document.getElementById('target');
+
+    let board, hScore, cScore, gameOver, heartsTurn, heartsStart;
+
+    // Precompute all 3-length straight segments (as arrays of indices)
+    const SEGMENTS = (() => {
+      const segs = [];
+      // rows
+      for (let r=0; r<SIZE; r++) {
+        for (let c=0; c<=SIZE-SEG_LEN; c++) {
+          segs.push([idx(r,c), idx(r,c+1), idx(r,c+2)]);
+        }
+      }
+      // cols
+      for (let c=0; c<SIZE; c++) {
+        for (let r=0; r<=SIZE-SEG_LEN; r++) {
+          segs.push([idx(r,c), idx(r+1,c), idx(r+2,c)]);
+        }
+      }
+      // main diagonals (top-left to bottom-right)
+      for (let r=0; r<=SIZE-SEG_LEN; r++) {
+        for (let c=0; c<=SIZE-SEG_LEN; c++) {
+          segs.push([idx(r,c), idx(r+1,c+1), idx(r+2,c+2)]);
+        }
+      }
+      // anti-diagonals (top-right to bottom-left)
+      for (let r=0; r<=SIZE-SEG_LEN; r++) {
+        for (let c=SEG_LEN-1; c<SIZE; c++) {
+          segs.push([idx(r,c), idx(r+1,c-1), idx(r+2,c-2)]);
+        }
+      }
+      return segs;
+    })();
+
+    function idx(r,c){ return r*SIZE + c; }
+
+    // Create 16 interactive cells
+    const cells = [...Array(SIZE*SIZE)].map((_, i) => {
+      const b = document.createElement('button');
+      b.className = 'cell';
+      b.setAttribute('role','gridcell');
+      b.setAttribute('aria-label',`Cell ${i+1}`);
+      b.dataset.idx = i;
+      b.addEventListener('click', () => move(i));
+      b.addEventListener('keydown', (e) => {
+        const r = Math.floor(i / SIZE), c = i % SIZE;
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); move(i); }
+        let t=null;
+        if (e.key === 'ArrowRight' && c < SIZE-1) t = i+1;
+        if (e.key === 'ArrowLeft' && c > 0) t = i-1;
+        if (e.key === 'ArrowDown' && r < SIZE-1) t = i+SIZE;
+        if (e.key === 'ArrowUp' && r > 0) t = i-SIZE;
+        if (t!=null) { e.preventDefault(); cells[t].focus(); }
+      });
+      boardEl.appendChild(b);
+      return b;
+    });
+
+    function symbol(cell){
+      return cell === H ? '♥' : cell === C ? '◯' : '';
+    }
+
+    function render(highlightSets=[]) {
+      board.forEach((v,i) => {
+        const el = cells[i];
+        el.textContent = symbol(v);
+        el.classList.toggle('heart', v===H);
+        el.classList.toggle('circle', v===C);
+        el.disabled = !!v || gameOver;
+        el.classList.remove('flash');
+      });
+      // highlight any cleared segments briefly
+      for (const set of highlightSets) {
+        for (const i of set) {
+          cells[i].classList.add('flash');
+          cells[i].classList.add('pop');
+          setTimeout(()=>cells[i].classList.remove('pop'),220);
+          setTimeout(()=>cells[i].classList.remove('flash'),380);
+        }
+      }
+
+      const turnTxt = heartsTurn ? 'Hearts' : 'Circles';
+      if (gameOver) {
+        statusEl.textContent = 'Match over — ' + turnTxt + ' to place (disabled)';
+      } else {
+        statusEl.textContent = `${turnTxt} to place`;
+      }
+      hScoreEl.textContent = `♥: ${hScore}`;
+      cScoreEl.textContent = `◯: ${cScore}`;
+    }
+
+    function move(i){
+      if (gameOver || board[i]) return;
+      board[i] = heartsTurn ? H : C;
+
+      // check palindromic segments produced by this move
+      const scoredSets = [];
+      let gained = 0;
+      for (const seg of SEGMENTS) {
+        const [a,b,c] = seg;
+        const va = board[a], vb = board[b], vc = board[c];
+        if (va && vb && vc) {
+          const isPal = (va===vc && va!==vb); // H C H or C H C
+          if (isPal) {
+            scoredSets.push(seg);
+            gained++;
+          }
+        }
+      }
+
+      if (gained>0) {
+        // clear tiles in all scoring segments (may overlap)
+        const toClear = new Set();
+        for (const s of scoredSets) s.forEach(i=>toClear.add(i));
+        for (const j of toClear) board[j] = null;
+        if (heartsTurn) hScore += gained; else cScore += gained;
+        // check win condition
+        const target = Math.max(1, Math.min(15, (parseInt(targetEl.value)||5)));
+        if (hScore >= target || cScore >= target) {
+          gameOver = true;
+          statusEl.textContent = `${heartsTurn ? 'Hearts' : 'Circles'} score${gained>1?'':'s'} ${gained} and win the match!`;
+          render(scoredSets);
+          return;
+        }
+      }
+
+      // Board full? end round
+      if (board.every(v => v)) {
+        gameOver = true;
+        const who = hScore===cScore ? 'It\'s a draw' : (hScore>cScore ? 'Hearts' : 'Circles') + ' lead';
+        statusEl.textContent = `Board full — ${who} ${hScore===cScore?'':'on points'}.`;
+        render(scoredSets);
+        return;
+      }
+
+      // next turn
+      heartsTurn = !heartsTurn;
+      render(scoredSets);
+    }
+
+    function reset(keepStarter=true){
+      board = Array(SIZE*SIZE).fill(null);
+      if (!keepStarter) heartsStart = !heartsStart;
+      heartsTurn = heartsStart;
+      gameOver = false;
+      hScore = 0; cScore = 0;
+      render();
+    }
+
+    // wire controls
+    resetBtn.addEventListener('click', () => reset(true));
+    swapBtn.addEventListener('click', () => reset(false));
+    helpBtn.addEventListener('click', () => rulesDlg.showModal());
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase()==='r') { e.preventDefault(); reset(true); }
+      if (e.key==='?' || (e.shiftKey && e.key==='/' )) { e.preventDefault(); rulesDlg.showModal(); }
+    });
+
+    // init
+    heartsStart = true; hScore = 0; cScore = 0; gameOver = false; board = Array(SIZE*SIZE).fill(null); heartsTurn = heartsStart;
+    render();
+    cells[5].focus();
+  </script></body>
+</html>
